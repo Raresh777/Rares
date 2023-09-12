@@ -26,7 +26,7 @@
         height: 100vh;
         margin: 0;
         overflow: auto;
-        color: black;
+        color: black; /* Font color changed to black */
       }
       .button-container {
         display: flex;
@@ -118,7 +118,7 @@
         document
           .getElementById("generateButton")
           .addEventListener("click", function () {
-            populateMessages(
+            generateMessages(
               "bundleBoxes",
               "https://raw.githubusercontent.com/Raresh777/TextAutomator/main/bld.txt"
             );
@@ -126,17 +126,17 @@
         document
           .getElementById("supportButton")
           .addEventListener("click", function () {
-            populateMessages(
+            generateMessages(
               "supportBoxes",
               "https://raw.githubusercontent.com/Raresh777/TextAutomator/main/supp.txt"
             );
           });
 
-        populateMessages(
+        generateMessages(
           "bundleBoxes",
           "https://raw.githubusercontent.com/Raresh777/TextAutomator/main/bld.txt"
         );
-        populateMessages(
+        generateMessages(
           "supportBoxes",
           "https://raw.githubusercontent.com/Raresh777/TextAutomator/main/supp.txt"
         );
@@ -159,48 +159,48 @@
         }, 2000);
       }
 
-      async function populateMessages(containerId, url) {
-        const shuffledSentences = await fetchShuffledSentences(url);
-        if (shuffledSentences.length < 3) {
-          console.error("Not enough sentences in the file.");
-          return;
+      async function generateMessages(containerId, url) {
+        clearPreviousBoxes(containerId);
+        for (let i = 1; i <= 3; i++) {
+          await generateRandomBox(i, url, containerId);
         }
-        const container = document.getElementById(containerId);
-        const boxes = container.children;
-        for (let i = 0; i < 3; i++) {
+      }
+
+      async function generateRandomBox(index, url, containerId) {
+        const outputElement = document.createElement("div");
+        outputElement.className =
+          containerId === "bundleBoxes" ? "output-box" : "support-output-box";
+
+        try {
+          const response = await fetch(url);
+          const text = await response.text();
+          const sentences = text.trim().split("^");
+          const randomSentence =
+            sentences[Math.floor(Math.random() * sentences.length)];
           const contentElement = document.createElement("div");
-          contentElement.id = `output${containerId}${i + 1}`;
-          contentElement.innerHTML = shuffledSentences[i];
-          boxes[i].appendChild(contentElement);
+          contentElement.id = `output${containerId}${index}`;
+          contentElement.innerHTML = randomSentence;
+          outputElement.appendChild(contentElement);
 
           const copyButton = document.createElement("button");
           copyButton.className = "copy-button";
           copyButton.innerHTML = "Copy Text";
           copyButton.onclick = function (event) {
-            copyToClipboard(event, `output${containerId}${i + 1}`);
+            copyToClipboard(event, `output${containerId}${index}`);
           };
-          boxes[i].appendChild(copyButton);
-        }
-      }
+          outputElement.appendChild(copyButton);
 
-      async function fetchShuffledSentences(url) {
-        try {
-          const response = await fetch(url);
-          const text = await response.text();
-          const sentences = text.trim().split("^");
-          return shuffleArray(sentences);
+          document.getElementById(containerId).appendChild(outputElement);
         } catch (error) {
           console.error("Error loading sentences:", error);
-          return [];
         }
       }
 
-      function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+      function clearPreviousBoxes(containerId) {
+        const container = document.getElementById(containerId);
+        while (container.firstChild) {
+          container.firstChild.remove();
         }
-        return array;
       }
     </script>
   </body>
